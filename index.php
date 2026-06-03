@@ -5,7 +5,7 @@ $uri= parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
 $uri= rtrim($uri,'/') ?: '/';
 $method= $_SERVER['REQUEST_METHOD'];
 
-match($uri){
+match(true){
     $uri ==='/' && $method ==='GET'
         => homepage(),
 
@@ -15,7 +15,7 @@ match($uri){
     $uri ==='/contact'&& $method ==='GET'
         =>  contactpage(),
 
-    $uri ==='/contact' && method==='POST'
+    $uri ==='/contact' && $method==='POST'
         => handleContactForm(),
 
     default  => notFound()
@@ -57,15 +57,38 @@ function handleContactForm():void{
     if($message ===''){
         $errors[]="Message is required";
     }
-    
+
     if(!empty($errors)){
+        http_response_code(422);
         require __DIR__ .'/views/contact.php';
         return;
 
     }
 
+    $record = sprintf("[%s]\n Name: %s\n Email: %s\n Message: %s\n------------------\n",
+    date('Y-m-d H:i:s'),
+    $name,
+    $email,
+    $message
+    
+    );
 
+    file_put_contents(
+        __DIR__ . '/storage/contacts.txt',
+        $record,
+        FILE_APPEND
+    );
 
+    header('Location: /contact?success=1');
+    exit;
+
+ 
+
+}
+function notFound(): void
+{
+    http_response_code(404);
+    require __DIR__ . '/views/404.php';
 }
 
 
